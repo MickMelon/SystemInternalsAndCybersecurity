@@ -4,4 +4,3 @@ struct machine* getMachine(int index);
 struct machine* getAllMachines();
 int initMachineControl();
 int countLoadedMachines();
-int saveMachines();

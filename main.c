@@ -128,7 +128,6 @@ void selectDeleteMachine() {
     }
 
     printf("SUCCESS: Machine deleted.\n");
-    saveMachines();
 }
 
 /**

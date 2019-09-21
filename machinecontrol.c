@@ -11,9 +11,12 @@ struct machine* getMachine(int index);
 struct machine* getAllMachines();
 int initMachineControl();
 int countLoadedMachines();
-int saveMachines();
+int saveAllMachines();
+int saveMachine(struct machine mach);
 int loadMachines();
 int getNextFreeIndex();
+int resetInMemoryMachines();
+int resetMachine(struct machine* mach);
 
 // The machine struct
 struct machine {
@@ -44,7 +47,7 @@ int addMachine(char name[], int pin, char location[]) {
     mach.status = 0;
     mach.index = getNextFreeIndex();
 
-    saveMachines();
+    saveMachine(mach);
     loadMachines();
 
     return 1;
@@ -55,8 +58,17 @@ int addMachine(char name[], int pin, char location[]) {
  */
 int deleteMachine(int index) {
     for (int i = 0; i < MAX_MACHINES; i++) {
+        printf("ID: %d Name: %s\n", machines[i].index, machines[i].name);
+    }
+    for (int i = 0; i < MAX_MACHINES; i++) {
         if (machines[i].index == index) {
             machines[i].index = -1;
+            strcpy(machines[i].name, "0");
+            strcpy(machines[i].location, "0");
+            machines[i].status = 0;
+            machines[i].pin = 0;
+
+            saveAllMachines();
             return 1;
         }
     }
@@ -113,10 +125,36 @@ int getNextFreeIndex() {
 }
 
 /**
+ * Resets all the values in the machines array.
+ */ 
+int resetInMemoryMachines() {
+    for (int i = 0; i < MAX_MACHINES; i++) {
+        resetMachine(&machines[i]);
+    }
+
+    return 1;
+}
+
+/**
+ * Resets all the values in the machine to 0.
+ */ 
+int resetMachine(struct machine* machine) {
+    machine->index = 0;
+    strcpy(machine->name, "0");
+    strcpy(machine->location, "0");
+    machine->status = 0;
+    machine->pin = 0;
+
+    return 1;
+}
+
+/**
  * Loads all the machines from the data file into memory
  * in the machines global var.
  */ 
 int loadMachines() {
+    resetInMemoryMachines();
+
     // Declare the variables
     FILE *file;
 
@@ -128,7 +166,7 @@ int loadMachines() {
     }
 
     // Read the entries into the machines global
-    size_t qty = fread(machines, sizeof(struct machine), MAX_MACHINES, file);
+    fread(machines, sizeof(struct machine), MAX_MACHINES, file);
 
     // Close the stream
     fclose(file);    
@@ -165,7 +203,7 @@ int saveMachine(struct machine mach) {
  * Saves all the machines that are loaded in memory in the
  * data file.
  */ 
-int saveMachines() {
+int saveAllMachines() {
     FILE *file;
 
     file = fopen("machines.dat", "w");
@@ -173,8 +211,6 @@ int saveMachines() {
         fprintf(stderr, "\nError opening machines.dat file\n");
         return 0;
     }
-
-    //fwrite(&machines, sizeof(machines), 1, file);
 
     for (int i = 0; i < MAX_MACHINES; i++) {
         if (machines[i].index < 1) continue;
