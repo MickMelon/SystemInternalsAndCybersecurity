@@ -4,6 +4,8 @@
 #include <dirent.h>
 #include <stdbool.h>
 
+#include "machinecontrol.h"
+
 #define MAX_MACHINES 5
 
 struct machine {
@@ -13,19 +15,16 @@ struct machine {
 };
 
 void displayMenu();
-void createMachine();
-int saveMachine(struct machine mach);
-struct machine* getMachine(int index);
-void showAllMachines();
-int getNextFreeIndex();
-void loadMachines();
-int countLoadedMachines();
-void searchByIndex();
-void saveMachines();
-void deleteMachine();
+void selectCreateMachine();
+void selectShowAllMachines();
+void selectSearchByIndex();
+void selectDeleteMachine();
 
 struct machine machines[MAX_MACHINES];
 
+/**
+ * Displays the menu and handles user selection.
+ */ 
 void displayMenu() {
     bool cont = true;
     while (cont) {
@@ -49,19 +48,19 @@ void displayMenu() {
 
         switch (choice) {
             case 1:
-                createMachine();
+                selectCreateMachine();
                 break;
 
             case 2:
-                showAllMachines();
+                selectShowAllMachines();
                 break;
 
             case 3:
-                searchByIndex();
+                selectSearchByIndex();
                 break;
 
             case 4:
-                deleteMachine();
+                selectDeleteMachine();
                 break;
 
             case 5:
@@ -84,9 +83,14 @@ void displayMenu() {
     printf("Goodbye\n");
 }
 
-void searchByIndex() {
-    printf("Enter the index to search for >>\n");
+/**
+ * Called when the user selects the "Search by Index" menu option.
+ */ 
+void selectSearchByIndex() {
+    struct machine *mach;
     int choice;
+
+    printf("Enter the index to search for >>\n");    
     scanf("%d", &choice);
 
     if (choice < 1 || choice > MAX_MACHINES) {
@@ -94,8 +98,7 @@ void searchByIndex() {
         return;
     }
 
-    struct machine *mach = getMachine(choice);
-
+    mach = getMachine(choice);
     if (mach == NULL) {
         printf("No machine found.\n");
         return;
@@ -105,122 +108,65 @@ void searchByIndex() {
         mach->name, mach->location, mach->index, mach->pin, mach->status);
 }
 
-void deleteMachine() {
+/**
+ * Called when the user selects the "Delete Machine" menu option.
+ */ 
+void selectDeleteMachine() {
+    int choice;
+
     if (countLoadedMachines() < 1) {
         printf("ERROR: There are no machines to delete.\n");
         return;
     }
-
-    int choice;
+    
     printf("Enter machine index >>\n");
     scanf("%d", &choice);
 
-    for (int i = 0; i < MAX_MACHINES; i++) {
-        if (machines[i].index == choice) {
-            machines[i].index = -1;
-            printf("Machine found and deleted.\n");
-            break;
-        }
-    }
-
-    saveMachines();
-}
-
-void createMachine() {
-    // Make sure there is space for another machine
-    if (countLoadedMachines() >= MAX_MACHINES) {
-        printf("ERROR: You cannot create a machine because the max limit of %d has been reached.\n", MAX_MACHINES);
+    if (deleteMachine(choice) == 0) {
+        printf("ERROR: No machine could be found with that index.\n");
         return;
     }
 
-    struct machine mach;
+    printf("SUCCESS: Machine deleted.\n");
+    saveMachines();
+}
+
+/**
+ * Called when the user selects the "Create Machine" option.
+ */ 
+void selectCreateMachine() {
+    // Make sure there is space for another machine
+    if (countLoadedMachines() >= MAX_MACHINES) {
+        printf("ERROR: You cannot create a machine because the max limit of %d has been reached.\n",
+            MAX_MACHINES);
+        return;
+    }
+
+    char name[8];
+    char location[16];
+    int index, pin;
+
     printf("Enter machine name >>\n");
-    scanf("%s", &mach.name);
+    scanf("%s", &name);
 
     printf("Enter machine location >>\n");
-    scanf("%s", &mach.location);
+    scanf("%s", &location);
 
-    mach.pin = 0;
-    mach.status = 0;
-    mach.index = getNextFreeIndex();
+    printf("Enter machine PIN >>\n");
+    scanf("%d", &pin);
 
-    saveMachine(mach);
-    loadMachines();
+    if (addMachine(name, pin, location) == 0) {
+        printf("ERROR: Failed to add machine.\n");
+        return;
+    }
 
-    printf("SUCCESS: Machine created with name %s and location %s (ID: %d)\n", mach.name, mach.location, mach.index);
+    printf("SUCCESS: Machine was created.\n");
 }
 
-int saveMachine(struct machine mach) {
-    FILE *file;
-
-    file = fopen("machines.dat", "a");
-    if (file == NULL) {
-        fprintf(stderr, "\nError opening machines.dat file\n");
-        exit(1);
-    }
-
-    fwrite(&mach, sizeof(mach), 1, file);
-
-    if (fwrite != 0) {
-        printf("Machine saved successfully!\n");
-    } else {
-        printf("Failed to save machine!\n");
-    }
-
-    fclose(file);
-
-    return 0;
-}
-
-void saveMachines() {
-    FILE *file;
-
-    file = fopen("machines.dat", "w1");
-    if (file == NULL) {
-        fprintf(stderr, "\nError opening machines.dat file\n");
-        exit(1);
-    }
-
-    //fwrite(&machines, sizeof(machines), 1, file);
-
-    for (int i = 0; i < MAX_MACHINES; i++) {
-        if (machines[i].index < 1) continue;
-
-        fwrite(&machines[i], sizeof(machines[i]), 1, file);
-    }
-
-    fclose(file);
-
-    // Refresh the machines array
-    loadMachines();
-}
-
-int getNextFreeIndex() {
-    // Declare the variables
-    FILE *file;
-    struct machine mach;
-    int index = -1;
-
-    // Attempt to open the machines file stream
-    file = fopen("machines.dat", "r");
-    if (file == NULL) {
-        fprintf(stderr, "\nError opening dat file\n");
-        exit(1);
-    }
-
-    // Read the entries until one with the matching index is found
-    while (fread(&mach, sizeof(struct machine), 1, file)) {
-        if (mach.index >= index) index = mach.index + 1;
-    }
-
-    // Close the stream
-    fclose(file);
-
-    // If index is -1 then there were no records found so index 1 can be used
-    return index == -1 ? 1 : index;
-}
-
-void showAllMachines() {
+/**
+ * Called when the user selects the "Show All Machines" menu option.
+ */ 
+void selectShowAllMachines() {
     // Read the entries until one with the matching index is found
     printf("Index       Name        Pin         Status          Location\n");
     for (int i = 0; i < MAX_MACHINES; i++) {
@@ -231,54 +177,10 @@ void showAllMachines() {
     }
 }
 
-struct machine* getMachine(int index) {
-    for (int i = 0; i < MAX_MACHINES; i++) {
-        if (machines[i].index == index) {
-            return &machines[i];
-        }
-    }
-
-    return NULL;
-}
-
-void loadMachines() {
-    // Declare the variables
-    FILE *file;
-
-    // Attempt to open the machines file stream
-    file = fopen("machines.dat", "r");
-    if (file == NULL) {
-        fprintf(stderr, "\nError opening machines.dat file\n");
-        exit(1);
-    }
-
-    // Read the entries into the machines global
-    printf("reading...\n");
-    size_t qty = fread(machines, sizeof(struct machine), MAX_MACHINES, file);
-    if (qty == 0) {
-        printf("No machines were loaded.");
-    }
-
-    // Close the stream
-    fclose(file);
-}
-
-int countLoadedMachines() {
-    int count = 0;
-    
-    for (int i = 0; i < MAX_MACHINES; i++) {
-        if (machines[i].index > 0) count++;
-    }
-
-    return count;
-}
-
+/**
+ * Called when the program is run.
+ */ 
 int main() {
-    loadMachines();
-
-    printf("There are %d machines\n", countLoadedMachines());
-
+    initMachineControl();
     displayMenu();
-
-    saveMachines();
 }
