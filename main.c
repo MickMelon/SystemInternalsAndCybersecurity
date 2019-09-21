@@ -4,6 +4,8 @@
 #include <dirent.h>
 #include <stdbool.h>
 
+#define MAX_MACHINES 5
+
 struct machine {
     char name[8];
     int index, pin, status;
@@ -11,11 +13,16 @@ struct machine {
 };
 
 void displayMenu();
+void createMachine();
 int saveMachine(struct machine mach);
-struct machine loadMachine(int id);
+struct machine* getMachine(int index);
 void showAllMachines();
-void addMachine();
 int getNextFreeIndex();
+void loadMachines();
+int countLoadedMachines();
+void searchByIndex();
+
+struct machine machines[MAX_MACHINES];
 
 void displayMenu() {
     bool cont = true;
@@ -40,7 +47,7 @@ void displayMenu() {
 
         switch (choice) {
             case 1:
-                addMachine();
+                createMachine();
                 break;
 
             case 2:
@@ -48,7 +55,7 @@ void displayMenu() {
                 break;
 
             case 3:
-                printf("Search by index clicked\n");
+                searchByIndex();
                 break;
 
             case 4:
@@ -73,29 +80,36 @@ void displayMenu() {
     }
 
     printf("Goodbye\n");
-
-   // showAllMachines();
-
-    /*struct machine mach;
-
-    strcpy(mach.name, "Second Machine");
-    strcpy(mach.location, "Mars");
-    mach.index = 23;
-    mach.pin = 3;
-    mach.status = 404;
-
-    saveMachine(mach);
-
-    struct machine test = loadMachine(23);
-
-    if (test.index == -1) {
-        printf("fucked\n");
-    } else {
-        printf("Machine is %s\n", test.location);
-    }*/
 }
 
-void addMachine() {
+void searchByIndex() {
+    printf("Enter the index to search for >>\n");
+    int choice;
+    scanf("%d", &choice);
+
+    if (choice < 1 || choice > MAX_MACHINES) {
+        printf("ERROR: Invalid index entered.\n");
+        return;
+    }
+
+    struct machine *mach = getMachine(choice);
+
+    if (mach == NULL) {
+        printf("No machine found.\n");
+        return;
+    }
+
+    printf("Machine found!\nName: %s \nLocation: %s\nIndex: %d\nPin: %d\nStatus: %d\n",
+        mach->name, mach->location, mach->index, mach->pin, mach->status);
+}
+
+void createMachine() {
+    // Make sure there is space for another machine
+    if (countLoadedMachines() >= MAX_MACHINES) {
+        printf("ERROR: You cannot create a machine because the max limit of %d has been reached.\n", MAX_MACHINES);
+        return;
+    }
+
     struct machine mach;
     printf("Enter machine name >>\n");
     scanf("%s", &mach.name);
@@ -108,6 +122,7 @@ void addMachine() {
     mach.index = getNextFreeIndex();
 
     saveMachine(mach);
+    loadMachines();
 
     printf("SUCCESS: Machine created with name %s and location %s (ID: %d)\n", mach.name, mach.location, mach.index);
 }
@@ -138,7 +153,7 @@ int getNextFreeIndex() {
     // Declare the variables
     FILE *file;
     struct machine mach;
-    int index = -2;
+    int index = -1;
 
     // Attempt to open the machines file stream
     file = fopen("machines.dat", "r");
@@ -149,13 +164,14 @@ int getNextFreeIndex() {
 
     // Read the entries until one with the matching index is found
     while (fread(&mach, sizeof(struct machine), 1, file)) {
-        if (mach.index > index) index = mach.index;
+        if (mach.index >= index) index = mach.index + 1;
     }
 
     // Close the stream
     fclose(file);
 
-    return index + 1;
+    // If index is -1 then there were no records found so index 1 can be used
+    return index == -1 ? 1 : index;
 }
 
 void showAllMachines() {
@@ -180,40 +196,52 @@ void showAllMachines() {
     fclose(file);
 }
 
-struct machine loadMachine(int id) {
+struct machine* getMachine(int index) {
+    for (int i = 0; i < MAX_MACHINES; i++) {
+        if (machines[i].index == index) {
+            return &machines[i];
+        }
+    }
+
+    return NULL;
+}
+
+void loadMachines() {
     // Declare the variables
     FILE *file;
-    struct machine mach;
-    bool exists = false;
 
     // Attempt to open the machines file stream
     file = fopen("machines.dat", "r");
     if (file == NULL) {
-        fprintf(stderr, "\nError opening %d.dat file\n", id);
+        fprintf(stderr, "\nError opening machines.dat file\n");
         exit(1);
     }
 
     // Read the entries until one with the matching index is found
-    while (fread(&mach, sizeof(struct machine), 1, file)) {
-        if (mach.index == id) {
-            exists = true;
-            break;
-        }
+    printf("reading...\n");
+    size_t qty = fread(machines, sizeof(struct machine), MAX_MACHINES, file);
+    if (qty == 0) {
+        printf("No machines were loaded.");
     }
 
     // Close the stream
     fclose(file);
+}
 
-    if (!exists) {
-        printf("The machine could not be found with index %d\n", id);
-        mach.index = -1;
-    } else {
-        printf("id = %d location = %s\n", mach.index, mach.location);  
-    }    
-      
-    return mach;
+int countLoadedMachines() {
+    int count = 0;
+    
+    for (int i = 0; i < MAX_MACHINES; i++) {
+        if (machines[i].index > 0) count++;
+    }
+
+    return count;
 }
 
 int main() {
+    loadMachines();
+
+    printf("There are %d machines\n", countLoadedMachines());
+
     displayMenu();
 }
