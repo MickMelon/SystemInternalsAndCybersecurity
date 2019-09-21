@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
+#include <stdbool.h>
 
 struct machine {
     char name[8];
@@ -11,6 +13,7 @@ struct machine {
 void displayMenu();
 int saveMachine(struct machine mach);
 struct machine loadMachine(int id);
+void showAllMachines();
 
 void displayMenu() {
     printf("*************************************************\n");
@@ -28,29 +31,33 @@ void displayMenu() {
     printf("*************************************************\n");
     printf("Enter your choice >>\n");
 
-    struct machine mach;
+    showAllMachines();
 
-    strcpy(mach.name, "First Machine");
-    strcpy(mach.location, "Earth");
-    mach.index = 1;
+    /*struct machine mach;
+
+    strcpy(mach.name, "Second Machine");
+    strcpy(mach.location, "Mars");
+    mach.index = 23;
     mach.pin = 3;
     mach.status = 404;
 
     saveMachine(mach);
-    printf("t");
-    struct machine test = loadMachine(mach.index);
 
-    printf("Machine is %s\n", test.location);
+    struct machine test = loadMachine(23);
+
+    if (test.index == -1) {
+        printf("fucked\n");
+    } else {
+        printf("Machine is %s\n", test.location);
+    }*/
 }
 
 int saveMachine(struct machine mach) {
     FILE *file;
-    char machFileName[20];
-    sprintf(machFileName, "machines/%d.dat", mach.index);
 
-    file = fopen(machFileName, "w");
+    file = fopen("machines.dat", "a");
     if (file == NULL) {
-        fprintf(stderr, "\nError opening %d.dat file\n", mach.index);
+        fprintf(stderr, "\nError opening machines.dat file\n");
         exit(1);
     }
 
@@ -63,31 +70,63 @@ int saveMachine(struct machine mach) {
     }
 
     fclose(file);
-printf("t");
+
     return 0;
 }
 
-struct machine loadMachine(int id) {
+void showAllMachines() {
+    // Declare the variables
     FILE *file;
     struct machine mach;
 
-    char machFileName[20];
-    sprintf(machFileName, "machines/%d.dat", id);
+    // Attempt to open the machines file stream
+    file = fopen("machines.dat", "r");
+    if (file == NULL) {
+        fprintf(stderr, "\nError opening dat file\n");
+        exit(1);
+    }
 
-    printf("opening file..");
-    file = fopen(machFileName, "r");
+    // Read the entries until one with the matching index is found
+    printf("Index   Name    Pin     Status      Location\n");
+    while (fread(&mach, sizeof(struct machine), 1, file)) {
+        printf("%d      %s      %d      %d      %s\n", mach.index, mach.name, mach.pin, mach.status, mach.location);
+    }
+
+    // Close the stream
+    fclose(file);
+}
+
+struct machine loadMachine(int id) {
+    // Declare the variables
+    FILE *file;
+    struct machine mach;
+    bool exists = false;
+
+    // Attempt to open the machines file stream
+    file = fopen("machines.dat", "r");
     if (file == NULL) {
         fprintf(stderr, "\nError opening %d.dat file\n", id);
         exit(1);
     }
 
-    printf("reading....");
+    // Read the entries until one with the matching index is found
     while (fread(&mach, sizeof(struct machine), 1, file)) {
-        printf("id = %d location = %s\n", mach.index, mach.location);
+        if (mach.index == id) {
+            exists = true;
+            break;
+        }
     }
 
+    // Close the stream
     fclose(file);
 
+    if (!exists) {
+        printf("The machine could not be found with index %d\n", id);
+        mach.index = -1;
+    } else {
+        printf("id = %d location = %s\n", mach.index, mach.location);  
+    }    
+      
     return mach;
 }
 
