@@ -15,7 +15,7 @@ struct machine {
 
 
 // Function definitions
-int addMachine(char name[], int pin, char location[]);
+int addMachine(char* name[], int pin, char* location[]);
 int deleteMachine(int index);
 struct machine* getMachine(int index);
 struct machine* getAllMachines();
@@ -45,11 +45,13 @@ int initMachineControl() {
 /**
  * Adds a machine to the data file.
  */
-int addMachine(char name[], int pin, char location[]) {
+int addMachine(char* name[], int pin, char* location[]) {
     struct machine mach;
 
-    strcpy(mach.name, name);
-    strcpy(mach.location, location);
+    printf("Name is now %s and %s", name, location);
+
+    strcpy(mach.name, *name);
+    strcpy(mach.location, *location);
     mach.pin = pin;
     mach.status = 0;
     mach.index = getNextFreeIndex();

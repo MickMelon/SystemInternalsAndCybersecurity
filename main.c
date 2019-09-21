@@ -9,13 +9,14 @@ void selectCreateMachine();
 void selectShowAllMachines();
 void selectSearchByIndex();
 void selectDeleteMachine();
+int getInputInt();
+char* getInputString(int max);
 
 /**
  * Displays the menu and handles user selection.
  */ 
 void displayMenu() {
-    bool cont = true;
-    while (cont) {
+    while (1) {
         printf("*************************************************\n");
         printf("* Vending Machine Control Console               *\n");
         printf("*                Submitted by: Michael McMillan *\n");
@@ -31,10 +32,9 @@ void displayMenu() {
         printf("*************************************************\n");
         printf("Enter your choice >>\n");
 
-        int choice;
-        scanf("%d", &choice);
+        int input = getInputInt();
 
-        switch (choice) {
+        switch (input) {
             case 1:
                 selectCreateMachine();
                 break;
@@ -63,12 +63,38 @@ void displayMenu() {
                 printf("Invalid option selected.\n");
         }
 
-        printf("Continue? [1/0] >>\n");
-        scanf("%d", &choice);
-        if (choice == 0) cont = false;
+        printf("Continue? (0 to exit) >>\n");
+        input = getInputInt();
+        if (input == 0) {
+            printf("Goodbye");
+            exit(1);
+        }
+    }
+}
+
+int getInputInt() {
+    char line[256];
+    int i;
+    if (fgets(line, sizeof(line), stdin)) {
+        if (1 == sscanf(line, "%d", &i)) {
+            return i;
+        }
     }
 
-    printf("Goodbye\n");
+    return -1;
+}
+
+char* getInputString(int max) {
+    char line[256];
+    char string[max];
+    if (fgets(line, sizeof(line), stdin)) {
+        if (1 == sscanf(line, "%s", &string)) {
+            char* rtrn = string;
+            return rtrn;
+        }
+    }
+
+    return NULL;
 }
 
 /**
@@ -104,8 +130,6 @@ void selectSearchByIndex() {
  * Called when the user selects the "Delete Machine" menu option.
  */ 
 void selectDeleteMachine() {
-    int choice;
-
     // Check if there are any machines
     if (countLoadedMachines() < 1) {
         printf("ERROR: There are no machines to delete.\n");
@@ -114,10 +138,20 @@ void selectDeleteMachine() {
     
     // Request user input
     printf("Enter machine index >>\n");
-    scanf("%d", &choice);
+    char input[10];
+    fgets(input, 10, stdin);
+    printf("%s", input);
+
+    int intInput = 1;
+
+    if (intInput < 1 || intInput > 100) {
+        printf("ERROR: Machine index must be between 1 and 100.\n");
+        return;
+    } 
+    
 
     // Attempt to delete the machine
-    if (deleteMachine(choice) == 0) {
+    if (deleteMachine(intInput) == 0) {
         printf("ERROR: No machine could be found with that index.\n");
         return;
     }
@@ -137,22 +171,24 @@ void selectCreateMachine() {
         return;
     }
 
-    char name[8];
-    char location[16];
-    int index, pin;
+    char* name;
+    char* location;
+    int pin;
 
     // Request user input
     printf("Enter machine name >>\n");
-    scanf("%s", &name);
+    name = getInputString(8);
+    printf("Entered %s\n", name);
 
     printf("Enter machine location >>\n");
-    scanf("%s", &location);
+    location = getInputString(16);
+    printf("Entered %s\n", location);
 
     printf("Enter machine PIN >>\n");
-    scanf("%d", &pin);
+    pin = getInputInt();
 
     // Attempt to add the machine
-    if (addMachine(name, pin, location) == 0) {
+    if (addMachine(&name, pin, &location) == 0) {
         printf("ERROR: Failed to add machine.\n");
         return;
     }
@@ -181,6 +217,7 @@ void selectShowAllMachines() {
  * Called when the program is run.
  */ 
 int main() {
+   // scanf("%*[^\n]%*c");
     initMachineControl();
     displayMenu();
 }
