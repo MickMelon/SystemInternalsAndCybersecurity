@@ -21,6 +21,8 @@ int getNextFreeIndex();
 void loadMachines();
 int countLoadedMachines();
 void searchByIndex();
+void saveMachines();
+void deleteMachine();
 
 struct machine machines[MAX_MACHINES];
 
@@ -59,7 +61,7 @@ void displayMenu() {
                 break;
 
             case 4:
-                printf("Delete machine clicked\n");
+                deleteMachine();
                 break;
 
             case 5:
@@ -101,6 +103,27 @@ void searchByIndex() {
 
     printf("Machine found!\nName: %s \nLocation: %s\nIndex: %d\nPin: %d\nStatus: %d\n",
         mach->name, mach->location, mach->index, mach->pin, mach->status);
+}
+
+void deleteMachine() {
+    if (countLoadedMachines() < 1) {
+        printf("ERROR: There are no machines to delete.\n");
+        return;
+    }
+
+    int choice;
+    printf("Enter machine index >>\n");
+    scanf("%d", &choice);
+
+    for (int i = 0; i < MAX_MACHINES; i++) {
+        if (machines[i].index == choice) {
+            machines[i].index = -1;
+            printf("Machine found and deleted.\n");
+            break;
+        }
+    }
+
+    saveMachines();
 }
 
 void createMachine() {
@@ -149,6 +172,29 @@ int saveMachine(struct machine mach) {
     return 0;
 }
 
+void saveMachines() {
+    FILE *file;
+
+    file = fopen("machines.dat", "w1");
+    if (file == NULL) {
+        fprintf(stderr, "\nError opening machines.dat file\n");
+        exit(1);
+    }
+
+    //fwrite(&machines, sizeof(machines), 1, file);
+
+    for (int i = 0; i < MAX_MACHINES; i++) {
+        if (machines[i].index < 1) continue;
+
+        fwrite(&machines[i], sizeof(machines[i]), 1, file);
+    }
+
+    fclose(file);
+
+    // Refresh the machines array
+    loadMachines();
+}
+
 int getNextFreeIndex() {
     // Declare the variables
     FILE *file;
@@ -175,25 +221,14 @@ int getNextFreeIndex() {
 }
 
 void showAllMachines() {
-    // Declare the variables
-    FILE *file;
-    struct machine mach;
-
-    // Attempt to open the machines file stream
-    file = fopen("machines.dat", "r");
-    if (file == NULL) {
-        fprintf(stderr, "\nError opening dat file\n");
-        exit(1);
-    }
-
     // Read the entries until one with the matching index is found
-    printf("Index   Name    Pin     Status      Location\n");
-    while (fread(&mach, sizeof(struct machine), 1, file)) {
-        printf("%d      %s      %d      %d      %s\n", mach.index, mach.name, mach.pin, mach.status, mach.location);
-    }
+    printf("Index       Name        Pin         Status          Location\n");
+    for (int i = 0; i < MAX_MACHINES; i++) {
+        if (machines[i].index < 1) continue;
 
-    // Close the stream
-    fclose(file);
+        printf("%d          %s          %d          %d          %s\n", machines[i].index,
+            machines[i].name, machines[i].pin, machines[i].status, machines[i].location);
+    }
 }
 
 struct machine* getMachine(int index) {
@@ -217,7 +252,7 @@ void loadMachines() {
         exit(1);
     }
 
-    // Read the entries until one with the matching index is found
+    // Read the entries into the machines global
     printf("reading...\n");
     size_t qty = fread(machines, sizeof(struct machine), MAX_MACHINES, file);
     if (qty == 0) {
@@ -244,4 +279,6 @@ int main() {
     printf("There are %d machines\n", countLoadedMachines());
 
     displayMenu();
+
+    saveMachines();
 }
