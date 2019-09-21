@@ -4,7 +4,17 @@
 #include <stdlib.h>
 
 #define MAX_MACHINES 5
+#define DATA_FILE "machines.dat"
 
+// The machine struct
+struct machine {
+    char name[8];
+    int index, pin, status;
+    char location[16];
+};
+
+
+// Function definitions
 int addMachine(char name[], int pin, char location[]);
 int deleteMachine(int index);
 struct machine* getMachine(int index);
@@ -18,17 +28,14 @@ int getNextFreeIndex();
 int resetInMemoryMachines();
 int resetMachine(struct machine* mach);
 
-// The machine struct
-struct machine {
-    char name[8];
-    int index, pin, status;
-    char location[16];
-};
-
 // All the machines are loaded into memory when the
 // application is started.
 struct machine machines[MAX_MACHINES];
 
+/**
+ * Carries out all initial tasks required to set up
+ * the machine control.
+ */ 
 int initMachineControl() {
     printf("Initialising machine control...");
     loadMachines();
@@ -106,9 +113,9 @@ int getNextFreeIndex() {
     int index = -1;
 
     // Attempt to open the machines file stream
-    file = fopen("machines.dat", "r");
+    file = fopen(DATA_FILE, "r");
     if (file == NULL) {
-        fprintf(stderr, "\nError opening dat file\n");
+        fprintf(stderr, "\nError opening data file\n");
         exit(1);
     }
 
@@ -153,15 +160,15 @@ int resetMachine(struct machine* machine) {
  * in the machines global var.
  */ 
 int loadMachines() {
-    resetInMemoryMachines();
-
-    // Declare the variables
     FILE *file;
 
+    // Reset the machine array
+    resetInMemoryMachines();    
+
     // Attempt to open the machines file stream
-    file = fopen("machines.dat", "r");
+    file = fopen(DATA_FILE, "r");
     if (file == NULL) {
-        fprintf(stderr, "\nError opening machines.dat file\n");
+        fprintf(stderr, "\nError opening data file\n");
         return 0;
     }
 
@@ -180,9 +187,10 @@ int loadMachines() {
 int saveMachine(struct machine mach) {
     FILE *file;
 
-    file = fopen("machines.dat", "a");
+    // Try to open the file stream
+    file = fopen(DATA_FILE, "a");
     if (file == NULL) {
-        fprintf(stderr, "\nError opening machines.dat file\n");
+        fprintf(stderr, "\nError opening data file\n");
         exit(1);
     }
 
@@ -206,9 +214,9 @@ int saveMachine(struct machine mach) {
 int saveAllMachines() {
     FILE *file;
 
-    file = fopen("machines.dat", "w");
+    file = fopen(DATA_FILE, "w");
     if (file == NULL) {
-        fprintf(stderr, "\nError opening machines.dat file\n");
+        fprintf(stderr, "\nError opening data file\n");
         return 0;
     }
 

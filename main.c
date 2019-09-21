@@ -1,26 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
 #include <stdbool.h>
-
 #include "machinecontrol.h"
 
-#define MAX_MACHINES 5
-
-struct machine {
-    char name[8];
-    int index, pin, status;
-    char location[16];
-};
-
+// Function definitions
 void displayMenu();
 void selectCreateMachine();
 void selectShowAllMachines();
 void selectSearchByIndex();
 void selectDeleteMachine();
-
-struct machine machines[MAX_MACHINES];
 
 /**
  * Displays the menu and handles user selection.
@@ -90,20 +78,24 @@ void selectSearchByIndex() {
     struct machine *mach;
     int choice;
 
+    // Request user input
     printf("Enter the index to search for >>\n");    
     scanf("%d", &choice);
 
-    if (choice < 1 || choice > MAX_MACHINES) {
+    // Check that the input was valid
+    if (choice < 1) {
         printf("ERROR: Invalid index entered.\n");
         return;
     }
 
+    // Try to receive the machine
     mach = getMachine(choice);
     if (mach == NULL) {
         printf("No machine found.\n");
         return;
     }
 
+    // If the machine was found, display it
     printf("Machine found!\nName: %s \nLocation: %s\nIndex: %d\nPin: %d\nStatus: %d\n",
         mach->name, mach->location, mach->index, mach->pin, mach->status);
 }
@@ -114,19 +106,23 @@ void selectSearchByIndex() {
 void selectDeleteMachine() {
     int choice;
 
+    // Check if there are any machines
     if (countLoadedMachines() < 1) {
         printf("ERROR: There are no machines to delete.\n");
         return;
     }
     
+    // Request user input
     printf("Enter machine index >>\n");
     scanf("%d", &choice);
 
+    // Attempt to delete the machine
     if (deleteMachine(choice) == 0) {
         printf("ERROR: No machine could be found with that index.\n");
         return;
     }
 
+    // Machine deleted so display success message
     printf("SUCCESS: Machine deleted.\n");
 }
 
@@ -145,6 +141,7 @@ void selectCreateMachine() {
     char location[16];
     int index, pin;
 
+    // Request user input
     printf("Enter machine name >>\n");
     scanf("%s", &name);
 
@@ -154,11 +151,13 @@ void selectCreateMachine() {
     printf("Enter machine PIN >>\n");
     scanf("%d", &pin);
 
+    // Attempt to add the machine
     if (addMachine(name, pin, location) == 0) {
         printf("ERROR: Failed to add machine.\n");
         return;
     }
 
+    // Machine was added so show success message
     printf("SUCCESS: Machine was created.\n");
 }
 
@@ -166,7 +165,9 @@ void selectCreateMachine() {
  * Called when the user selects the "Show All Machines" menu option.
  */ 
 void selectShowAllMachines() {
-    // Read the entries until one with the matching index is found
+    struct machine* machines;
+    machines = getAllMachines();
+
     printf("Index       Name        Pin         Status          Location\n");
     for (int i = 0; i < MAX_MACHINES; i++) {
         if (machines[i].index < 1) continue;
