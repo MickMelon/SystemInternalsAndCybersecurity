@@ -7,14 +7,14 @@
 
 // The machine struct
 struct machine {
-    char name[16];
+    char name[NAME_MAX_LENGTH];
     int index, pin, status;
-    char location[32];
+    char location[LOCATION_MAX_LENGTH];
 };
 
 
 // Function definitions
-int addMachine(char name[], int pin, char location[]);
+int addMachine(char name[NAME_MAX_LENGTH], int pin, char location[LOCATION_MAX_LENGTH]);
 int deleteMachine(int index);
 struct machine* getMachine(int index);
 struct machine* getAllMachines();
@@ -29,6 +29,7 @@ int resetMachine(struct machine* mach);
 int updateMachineStatus(int index, int status);
 int updateMachineName(int index, char name[NAME_MAX_LENGTH]);
 int updateMachineLocation(int index, char location[LOCATION_MAX_LENGTH]);
+int updateMachinePin(int index, int pin);
 
 // All the machines are loaded into memory when the
 // application is started.
@@ -47,7 +48,7 @@ int initMachineControl() {
 /**
  * Adds a machine to the data file.
  */
-int addMachine(char name[], int pin, char location[]) {
+int addMachine(char name[NAME_MAX_LENGTH], int pin, char location[LOCATION_MAX_LENGTH]) {
     struct machine mach;
 
     printf("Name is now %s and %s", name, location);
@@ -211,6 +212,28 @@ int updateMachineStatus(int index, int status) {
     }
 
     mach->status = status;
+
+    saveAllMachines();
+
+    return 1;
+}
+
+/**
+ * Updates a machine's pin.
+ */ 
+int updateMachinePin(int index, int pin) {
+    struct machine* mach;
+
+    if (pin < 1 || pin > 40) {
+        return 0;
+    }
+
+    mach = getMachine(index);
+    if (mach == NULL) {
+        return 0;
+    }
+
+    mach->pin = pin;
 
     saveAllMachines();
 

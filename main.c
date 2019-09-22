@@ -17,6 +17,7 @@ void selectDeleteMachine();
 void selectUpdateStatus();
 void selectUpdateName();
 void selectUpdateLocation();
+void selectUpdatePin();
 char* safeStringInput(char* input, int length);
 int safeIntInput(int *input);
 
@@ -101,6 +102,7 @@ void displayMenu() {
         printf("5. Update Status\n");
         printf("6. Update Name\n");
         printf("7. Update Location\n");
+        printf("8. Update Pin\n");
         printf("9. Exit\n");
         printf("*************************************************\n");
         
@@ -137,6 +139,10 @@ void displayMenu() {
 
             case 7:
                 selectUpdateLocation();
+                break;
+
+            case 8:
+                selectUpdatePin();
                 break;
 
             case 9:
@@ -227,26 +233,26 @@ void selectCreateMachine() {
         return;
     }
 
-    char name[16];
-    char location[32];
+    char name[NAME_MAX_LENGTH];
+    char location[LOCATION_MAX_LENGTH];
     int pin;
 
     // Request machine name
     do {
-        printf("Enter machine name >>\n");
-    } while (safeStringInput(name, 16) == NULL || name[0] == '\0');    
+        printf("Enter machine name (max %d chars) >>\n", NAME_MAX_LENGTH);
+    } while (safeStringInput(name, NAME_MAX_LENGTH) == NULL || name[0] == '\0');    
     printf("Entered %s ref is %s\n", name, &name);
 
     // Request machine location
     do {
-        printf("Enter machine location >>\n");
-    } while (safeStringInput(location, 32) == NULL || location[0] == '\0');
+        printf("Enter machine location (max %d chars) >>\n", LOCATION_MAX_LENGTH);
+    } while (safeStringInput(location, LOCATION_MAX_LENGTH) == NULL || location[0] == '\0');
     printf("Entered %s\n", location);
 
     // Request machine pin
     do {
-        printf("Enter machine PIN >>\n");
-    } while (safeIntInput(&pin) == 0 || pin < 0 || pin > 100);
+        printf("Enter machine PIN (must be 1-40) >>\n");
+    } while (safeIntInput(&pin) == 0 || (pin < 1 || pin > 40));
     printf("Entered %d\n", pin);    
 
     // Attempt to add the machine
@@ -372,6 +378,36 @@ void selectUpdateLocation() {
     }
 
     printf("SUCCESS: Machine location updated.\n");
+}
+
+void selectUpdatePin() {
+    int index, pin;
+    struct machine* mach;
+
+    // Request index
+    do {
+        printf("Enter the index to update pin for >>\n");    
+    } while (safeIntInput(&index) == 0);
+
+    // Check if the machine exists
+    mach = getMachine(index);
+    if (mach == NULL) {
+        printf("ERROR: No machine was found with that index.\n");
+        return;
+    }
+
+    // Request pin
+    do {
+        printf("Enter the pin (must be 1-40) (current: %d) >>\n", mach->pin); 
+    } while (safeIntInput(&pin) == 0 || (pin < 1 || pin > 40));
+
+    // Attempt to update machine pin
+    if (updateMachinePin(index, pin) == 0) {
+        printf("ERROR: Could not update machine pin.\n");
+        return;
+    }
+
+    printf("SUCCESS: Machine pin was updated.\n");
 }
 
 /**
