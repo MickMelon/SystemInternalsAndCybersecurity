@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <limits.h>
+#include <string.h>
 #include "machinecontrol.h"
 
 // Function definitions
@@ -9,8 +12,63 @@ void selectCreateMachine();
 void selectShowAllMachines();
 void selectSearchByIndex();
 void selectDeleteMachine();
-int getInputInt();
-char* getInputString(int max);
+
+char* safeStringInput(char* input, int length);
+int safeIntInput(int *input);
+void clearBuffer();
+
+void clearBuffer() {
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF);
+}
+
+char* safeStringInput(char* input, int length) {
+    
+
+    if (fgets(input, length, stdin)) {
+        input[strcspn(input, "\n")] = 0;
+        return input;
+    }
+
+    return NULL;
+}
+
+int safeIntInput(int* input) {
+    long longInput;
+    char buf[1024];
+
+    if (!fgets(buf, 1024, stdin)) {
+        printf("ERROR: Did not receive any input.\n");
+        return 0;
+    }
+
+    char *endPtr;
+    errno = 0;
+    longInput = strtol(buf, &endPtr, 10);
+
+    // Check if out of range
+    if (errno == ERANGE) {
+        printf("ERROR: The number you entered was too large or small.\n");
+        clearBuffer();
+        return 0;
+    } else if (endPtr == buf) {
+        // No character was read
+        printf("ERROR: No character was read.\n");
+        clearBuffer();
+        return 0;
+    } else if (*endPtr && *endPtr != '\n') {
+        printf("ERROR: End of line.\n");
+        clearBuffer();
+        return 0;
+    } else if (longInput > INT_MAX || longInput < INT_MIN) {
+        printf("ERROR: Number is not within acceptable int range.\n");
+        clearBuffer();
+        return 0;
+    }
+
+    *input = (int) longInput;
+    return 1;
+}
 
 /**
  * Displays the menu and handles user selection.
@@ -30,9 +88,12 @@ void displayMenu() {
         printf("5. Update Status\n");
         printf("9. Exit\n");
         printf("*************************************************\n");
-        printf("Enter your choice >>\n");
+        
 
-        int input = getInputInt();
+        int input;
+        do {
+            printf("Enter your choice >>\n");
+        } while (safeIntInput(&input) == 0);
 
         switch (input) {
             case 1:
@@ -64,37 +125,12 @@ void displayMenu() {
         }
 
         printf("Continue? (0 to exit) >>\n");
-        input = getInputInt();
+        safeIntInput(&input);
         if (input == 0) {
             printf("Goodbye");
             exit(1);
         }
     }
-}
-
-int getInputInt() {
-    char line[256];
-    int i;
-    if (fgets(line, sizeof(line), stdin)) {
-        if (1 == sscanf(line, "%d", &i)) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-char* getInputString(int max) {
-    char line[256];
-    char string[max];
-    if (fgets(line, sizeof(line), stdin)) {
-        if (1 == sscanf(line, "%s", &string)) {
-            char* rtrn = string;
-            return rtrn;
-        }
-    }
-
-    return NULL;
 }
 
 /**
@@ -106,7 +142,7 @@ void selectSearchByIndex() {
 
     // Request user input
     printf("Enter the index to search for >>\n");    
-    scanf("%d", &choice);
+    safeIntInput(&choice);
 
     // Check that the input was valid
     if (choice < 1) {
@@ -138,20 +174,17 @@ void selectDeleteMachine() {
     
     // Request user input
     printf("Enter machine index >>\n");
-    char input[10];
-    fgets(input, 10, stdin);
-    printf("%s", input);
+    int input;
+    safeIntInput(&input);
 
-    int intInput = 1;
-
-    if (intInput < 1 || intInput > 100) {
+    if (input < 1 || input > 100) {
         printf("ERROR: Machine index must be between 1 and 100.\n");
         return;
     } 
     
 
     // Attempt to delete the machine
-    if (deleteMachine(intInput) == 0) {
+    if (deleteMachine(input) == 0) {
         printf("ERROR: No machine could be found with that index.\n");
         return;
     }
@@ -171,24 +204,30 @@ void selectCreateMachine() {
         return;
     }
 
-    char* name;
-    char* location;
+    char name[16];
+    char location[32];
     int pin;
 
-    // Request user input
-    printf("Enter machine name >>\n");
-    name = getInputString(8);
-    printf("Entered %s\n", name);
+    // Request machine name
+    do {
+        printf("Enter machine name >>\n");        
+    } while (safeStringInput(name, 16) == NULL || name[0] == '\0');    
+    printf("Entered %s ref is %s\n", name, &name);
 
-    printf("Enter machine location >>\n");
-    location = getInputString(16);
+    // Request machine location
+    do {
+        printf("Enter machine location >>\n");
+    } while (safeStringInput(location, 32) == NULL || location[0] == '\0');
     printf("Entered %s\n", location);
 
-    printf("Enter machine PIN >>\n");
-    pin = getInputInt();
+    // Request machine pin
+    do {
+        printf("Enter machine PIN >>\n");
+    } while (safeIntInput(&pin) == 0 || pin < 0 || pin > 100);
+    printf("Entered %d\n", pin);    
 
     // Attempt to add the machine
-    if (addMachine(&name, pin, &location) == 0) {
+    if (addMachine(name, pin, location) == 0) {
         printf("ERROR: Failed to add machine.\n");
         return;
     }
