@@ -27,6 +27,8 @@ int getNextFreeIndex();
 int resetInMemoryMachines();
 int resetMachine(struct machine* mach);
 int updateMachineStatus(int index, int status);
+int updateMachineName(int index, char name[NAME_MAX_LENGTH]);
+int updateMachineLocation(int index, char location[LOCATION_MAX_LENGTH]);
 
 // All the machines are loaded into memory when the
 // application is started.
@@ -37,7 +39,7 @@ struct machine machines[MAX_MACHINES];
  * the machine control.
  */ 
 int initMachineControl() {
-    printf("Initialising machine control...");
+    printf("Initialising machine control...\n");
     loadMachines();
     printf("Machine control initialised and loaded %d machines\n", countLoadedMachines());
 }
@@ -209,6 +211,42 @@ int updateMachineStatus(int index, int status) {
     }
 
     mach->status = status;
+
+    saveAllMachines();
+
+    return 1;
+}
+
+/**
+ * Updates a machine's name.
+ */ 
+int updateMachineName(int index, char name[NAME_MAX_LENGTH]) {
+    struct machine* mach;
+
+    mach = getMachine(index);
+    if (mach == NULL) {
+        return 0;
+    }
+
+    strcpy(mach->name, name);
+
+    saveAllMachines();
+
+    return 1;
+}
+
+/**
+ * Updates a machine's location.
+ */ 
+int updateMachineLocation(int index, char location[LOCATION_MAX_LENGTH]) {
+    struct machine* mach;
+
+    mach = getMachine(index);
+    if (mach == NULL) {
+        return 0;
+    }
+
+    strcpy(mach->location, location);
 
     saveAllMachines();
 

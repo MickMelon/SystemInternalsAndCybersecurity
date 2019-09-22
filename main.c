@@ -132,7 +132,7 @@ void displayMenu() {
                 break;
 
             case 6:
-                //selectUpdateName();
+                selectUpdateName();
                 break;
 
             case 7:
@@ -275,9 +275,10 @@ void selectShowAllMachines() {
     }
 }
 
+/**
+ * Called when the user selects the "Update Status" menu option.
+ */ 
 void selectUpdateStatus() {
-    // Get machine index
-    struct machine *mach;
     int index, status;
 
     // Request index
@@ -285,8 +286,9 @@ void selectUpdateStatus() {
         printf("Enter the index to update status for >>\n");    
     } while (safeIntInput(&index) == 0);
 
+    // Check if the machine exists
     if (getMachine(index) == NULL) {
-        printf("ERROR: No machine was found with that index.");
+        printf("ERROR: No machine was found with that index.\n");
         return;
     }
 
@@ -302,6 +304,47 @@ void selectUpdateStatus() {
     }
 
     printf("SUCCESS: Machine status was updated.\n");
+}
+
+/**
+ * Called when the user selects the "Update Name" menu option.
+ */ 
+void selectUpdateName() {
+    int index;
+    char name[NAME_MAX_LENGTH];
+    struct machine* mach;
+
+    // Request index
+    do {
+        printf("Enter the index to update status for >>\n");    
+    } while (safeIntInput(&index) == 0);
+
+    // Check if the machine exists
+    mach = getMachine(index);
+    if (mach == NULL) {
+        printf("ERROR: No machine was found with that index.\n");
+        return;
+    }
+
+    // Request new name
+    do {
+        printf("Enter a new name for the machine (current: '%s') >>\n", mach->name);
+    } while (safeStringInput(name, NAME_MAX_LENGTH) == NULL || name == '\0');
+
+    // Attempt to update the name
+    if (updateMachineName(index, name) == 0) {
+        printf("ERROR: Unable to update the machine name.\n");
+        return;
+    }
+
+    printf("SUCCESS: Machine name updated.\n");
+}
+
+/**
+ * Called when the user selects the "Update Location" menu option.
+ */
+void selectUpdateLocation() {
+
 }
 
 /**
