@@ -3,14 +3,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_MACHINES 5
-#define DATA_FILE "machines.dat"
+#include "defines.h"
 
 // The machine struct
 struct machine {
-    char name[8];
+    char name[16];
     int index, pin, status;
-    char location[16];
+    char location[32];
 };
 
 
@@ -105,28 +104,15 @@ struct machine* getAllMachines() {
  * Gets the next available index.
  */ 
 int getNextFreeIndex() {
-    // Declare the variables
-    FILE *file;
-    struct machine mach;
     int index = -1;
-
-    // Attempt to open the machines file stream
-    file = fopen(DATA_FILE, "r");
-    if (file == NULL) {
-        fprintf(stderr, "\nError opening data file\n");
-        exit(1);
+    
+    for (int i = 0; i < MAX_MACHINES; i++) {
+        if (machines[i].index >= index) {
+            index = machines[i].index + 1;
+        }
     }
-
-    // Read the entries until one with the matching index is found
-    while (fread(&mach, sizeof(struct machine), 1, file)) {
-        if (mach.index >= index) index = mach.index + 1;
-    }
-
-    // Close the stream
-    fclose(file);
-
-    // If index is -1 then there were no records found so index 1 can be used
-    return index == -1 ? 1 : index;
+    // If index is less than 1 then there were no records found so index 1 can be used
+    return index < 1 ? 1 : index;
 }
 
 /**

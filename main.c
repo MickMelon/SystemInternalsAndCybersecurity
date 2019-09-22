@@ -4,6 +4,8 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
+
+#include "defines.h"
 #include "machinecontrol.h"
 
 // Function definitions
@@ -12,10 +14,13 @@ void selectCreateMachine();
 void selectShowAllMachines();
 void selectSearchByIndex();
 void selectDeleteMachine();
-
 char* safeStringInput(char* input, int length);
 int safeIntInput(int *input);
 
+/**
+ * Gets an input from the user safely. This will not allow
+ * the user to enter a string that is too long.
+ */ 
 char* safeStringInput(char* input, int length) {
     if (fgets(input, length, stdin)) {
         printf("The input is %s", input);
@@ -39,6 +44,9 @@ char* safeStringInput(char* input, int length) {
     return NULL;
 }
 
+/**
+ * Safely gets an int from the user input.
+ */ 
 int safeIntInput(int* input) {
     long longInput;
     char buf[1024];
@@ -258,7 +266,6 @@ void selectShowAllMachines() {
  * Called when the program is run.
  */ 
 int main() {
-   // scanf("%*[^\n]%*c");
     initMachineControl();
     displayMenu();
 }

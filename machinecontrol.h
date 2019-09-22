@@ -1,10 +1,8 @@
-#define MAX_MACHINES 5
-
 // The machine struct
 struct machine {
-    char name[8];
+    char name[16];
     int index, pin, status;
-    char location[16];
+    char location[32];
 };
 
 // Function definitions
