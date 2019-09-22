@@ -136,7 +136,7 @@ void displayMenu() {
                 break;
 
             case 7:
-                //selectUpdateLocation();
+                selectUpdateLocation();
                 break;
 
             case 9:
@@ -316,7 +316,7 @@ void selectUpdateName() {
 
     // Request index
     do {
-        printf("Enter the index to update status for >>\n");    
+        printf("Enter the index to update name for >>\n");    
     } while (safeIntInput(&index) == 0);
 
     // Check if the machine exists
@@ -344,7 +344,34 @@ void selectUpdateName() {
  * Called when the user selects the "Update Location" menu option.
  */
 void selectUpdateLocation() {
+    int index;
+    char location[LOCATION_MAX_LENGTH];
+    struct machine* mach;
 
+    // Request index
+    do {
+        printf("Enter the index to update location for >>\n");    
+    } while (safeIntInput(&index) == 0);
+
+    // Check if the machine exists
+    mach = getMachine(index);
+    if (mach == NULL) {
+        printf("ERROR: No machine was found with that index.\n");
+        return;
+    }
+
+    // Request new location
+    do {
+        printf("Enter a new location for the machine (current: '%s') >>\n", mach->location);
+    } while (safeStringInput(location, LOCATION_MAX_LENGTH) == NULL || location == '\0');
+
+    // Attempt to update the location
+    if (updateMachineLocation(index, location) == 0) {
+        printf("ERROR: Unable to update the machine location.\n");
+        return;
+    }
+
+    printf("SUCCESS: Machine location updated.\n");
 }
 
 /**
