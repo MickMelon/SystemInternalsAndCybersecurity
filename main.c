@@ -15,17 +15,23 @@ void selectDeleteMachine();
 
 char* safeStringInput(char* input, int length);
 int safeIntInput(int *input);
-void clearBuffer();
-
-void clearBuffer() {
-    int ch;
-    while ((ch = getchar()) != '\n' && ch != EOF);
-}
 
 char* safeStringInput(char* input, int length) {
-    
-
     if (fgets(input, length, stdin)) {
+        printf("The input is %s", input);
+        char* newline = strchr(input, '\n');
+
+        if (!newline) {
+            printf("ERROR: Input is too long\n");
+
+            // Clear the buffer
+            while (!newline && fgets(input, length, stdin)) {
+                newline = strchr(input, '\n');
+            }
+
+            return NULL;
+        }
+
         input[strcspn(input, "\n")] = 0;
         return input;
     }
@@ -49,20 +55,16 @@ int safeIntInput(int* input) {
     // Check if out of range
     if (errno == ERANGE) {
         printf("ERROR: The number you entered was too large or small.\n");
-        clearBuffer();
         return 0;
     } else if (endPtr == buf) {
         // No character was read
         printf("ERROR: No character was read.\n");
-        clearBuffer();
         return 0;
     } else if (*endPtr && *endPtr != '\n') {
         printf("ERROR: End of line.\n");
-        clearBuffer();
         return 0;
     } else if (longInput > INT_MAX || longInput < INT_MIN) {
         printf("ERROR: Number is not within acceptable int range.\n");
-        clearBuffer();
         return 0;
     }
 
@@ -210,7 +212,7 @@ void selectCreateMachine() {
 
     // Request machine name
     do {
-        printf("Enter machine name >>\n");        
+        printf("Enter machine name >>\n");
     } while (safeStringInput(name, 16) == NULL || name[0] == '\0');    
     printf("Entered %s ref is %s\n", name, &name);
 
