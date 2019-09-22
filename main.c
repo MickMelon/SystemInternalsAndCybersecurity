@@ -14,6 +14,9 @@ void selectCreateMachine();
 void selectShowAllMachines();
 void selectSearchByIndex();
 void selectDeleteMachine();
+void selectUpdateStatus();
+void selectUpdateName();
+void selectUpdateLocation();
 char* safeStringInput(char* input, int length);
 int safeIntInput(int *input);
 
@@ -96,6 +99,8 @@ void displayMenu() {
         printf("3. Search By Index\n");
         printf("4. Delete Machine\n");
         printf("5. Update Status\n");
+        printf("6. Update Name\n");
+        printf("7. Update Location\n");
         printf("9. Exit\n");
         printf("*************************************************\n");
         
@@ -123,7 +128,15 @@ void displayMenu() {
                 break;
 
             case 5:
-                printf("Update status clicked\n");
+                selectUpdateStatus();
+                break;
+
+            case 6:
+                //selectUpdateName();
+                break;
+
+            case 7:
+                //selectUpdateLocation();
                 break;
 
             case 9:
@@ -260,6 +273,35 @@ void selectShowAllMachines() {
         printf("%d          %s          %d          %d          %s\n", machines[i].index,
             machines[i].name, machines[i].pin, machines[i].status, machines[i].location);
     }
+}
+
+void selectUpdateStatus() {
+    // Get machine index
+    struct machine *mach;
+    int index, status;
+
+    // Request index
+    do {
+        printf("Enter the index to update status for >>\n");    
+    } while (safeIntInput(&index) == 0);
+
+    if (getMachine(index) == NULL) {
+        printf("ERROR: No machine was found with that index.");
+        return;
+    }
+
+    // Request status
+    do {
+        printf("Enter the status (1 or 0) >>\n"); 
+    } while (safeIntInput(&status) == 0 || (status < 0 || status > 1));
+
+    // Attempt to update machine status
+    if (updateMachineStatus(index, status) == 0) {
+        printf("ERROR: Could not update machine status.\n");
+        return;
+    }
+
+    printf("SUCCESS: Machine status was updated.\n");
 }
 
 /**

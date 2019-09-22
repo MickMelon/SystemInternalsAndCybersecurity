@@ -26,6 +26,7 @@ int loadMachines();
 int getNextFreeIndex();
 int resetInMemoryMachines();
 int resetMachine(struct machine* mach);
+int updateMachineStatus(int index, int status);
 
 // All the machines are loaded into memory when the
 // application is started.
@@ -111,6 +112,7 @@ int getNextFreeIndex() {
             index = machines[i].index + 1;
         }
     }
+
     // If index is less than 1 then there were no records found so index 1 can be used
     return index < 1 ? 1 : index;
 }
@@ -189,6 +191,28 @@ int saveMachine(struct machine mach) {
     fclose(file);
 
     return 0;
+}
+
+/**
+ * Updates a machine's status.
+ */ 
+int updateMachineStatus(int index, int status) {
+    struct machine* mach;
+
+    if (status > 1 || status < 0) {
+        return 0;
+    }
+
+    mach = getMachine(index);
+    if (mach == NULL) {
+        return 0;
+    }
+
+    mach->status = status;
+
+    saveAllMachines();
+
+    return 1;
 }
 
 /**
