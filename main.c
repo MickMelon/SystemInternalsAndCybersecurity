@@ -9,6 +9,8 @@
 #include "machinecontrol.h"
 
 // Function definitions
+char* safeStringInput(char* input, int length);
+int safeIntInput(int *input);
 void displayMenu();
 void selectCreateMachine();
 void selectShowAllMachines();
@@ -18,8 +20,6 @@ void selectUpdateStatus();
 void selectUpdateName();
 void selectUpdateLocation();
 void selectUpdatePin();
-char* safeStringInput(char* input, int length);
-int safeIntInput(int *input);
 
 /**
  * Gets an input from the user safely. This will not allow
@@ -380,6 +380,9 @@ void selectUpdateLocation() {
     printf("SUCCESS: Machine location updated.\n");
 }
 
+/**
+ * Called when the user selects the "Update Pin" menu option.
+ */ 
 void selectUpdatePin() {
     int index, pin;
     struct machine* mach;

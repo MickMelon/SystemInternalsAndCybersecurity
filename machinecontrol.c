@@ -53,8 +53,8 @@ int addMachine(char name[NAME_MAX_LENGTH], int pin, char location[LOCATION_MAX_L
 
     printf("Name is now %s and %s", name, location);
 
-    strcpy(mach.name, name);
-    strcpy(mach.location, location);
+    strncpy(mach.name, name, NAME_MAX_LENGTH);
+    strncpy(mach.location, location, LOCATION_MAX_LENGTH);
     mach.pin = pin;
     mach.status = 0;
     mach.index = getNextFreeIndex();
@@ -251,7 +251,7 @@ int updateMachineName(int index, char name[NAME_MAX_LENGTH]) {
         return 0;
     }
 
-    strcpy(mach->name, name);
+    strncpy(mach->name, name, NAME_MAX_LENGTH);
 
     saveAllMachines();
 
@@ -269,7 +269,7 @@ int updateMachineLocation(int index, char location[LOCATION_MAX_LENGTH]) {
         return 0;
     }
 
-    strcpy(mach->location, location);
+    strncpy(mach->location, location, LOCATION_MAX_LENGTH);
 
     saveAllMachines();
 
