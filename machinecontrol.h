@@ -17,3 +17,4 @@ int updateMachineName(int index, char name[NAME_MAX_LENGTH]);
 int updateMachineLocation(int index, char location[LOCATION_MAX_LENGTH]);
 int updateMachinePin(int index, int pin);
 int isValidPin(int pin);
+void turnMachinesOff();

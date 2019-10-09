@@ -31,6 +31,9 @@ int updateMachineName(int index, char name[NAME_MAX_LENGTH]);
 int updateMachineLocation(int index, char location[LOCATION_MAX_LENGTH]);
 int updateMachinePin(int index, int pin);
 int isValidPin(int pin);
+int setPinStatus(int pin, int status);
+int setMachineStatuses();
+void turnMachinesOff();
 
 // All the machines are loaded into memory when the
 // application is started.
@@ -43,7 +46,35 @@ struct machine machines[MAX_MACHINES];
 int initMachineControl() {
     printf("Initialising machine control...\n");
     loadMachines();
+    setMachineStatuses();
     printf("Machine control initialised and loaded %d machines\n", countLoadedMachines());
+}
+
+/**
+ * Turns all the machines off. Designed to run on program exit.
+ */ 
+void turnMachinesOff() {
+    printf("Turning machines off....\n");
+    for (int i = 0; i < MAX_MACHINES; i++) {
+        if (isValidPin(machines[i].pin)) {
+            setPinStatus(machines[i].pin, 0);
+        }
+    }
+}
+
+/**
+ * Initially sets the status of all machines.
+ */ 
+int setMachineStatuses() {
+    for (int i = 0; i < MAX_MACHINES; i++) {
+        if (isValidPin(machines[i].pin)) {
+            setPinStatus(machines[i].pin, machines[i].status);
+        } else {
+            printf("WARNING: Machine index %d has an invalid GPIO pin!\n", machines[i].index);
+        }
+    }
+
+    return 1;
 }
 
 /**
@@ -230,13 +261,24 @@ int updateMachineStatus(int index, int status) {
 
     mach->status = status;
 
-    char cmd[100];
-    sprintf(cmd, "sudo gpio -g mode %d out", mach->pin);
-    system(cmd);
-    sprintf(cmd, "sudo gpio -g write %d %d", mach->pin, status);
-    system(cmd);
+    setPinStatus(mach->pin, mach->status);
 
     saveAllMachines();
+
+    return 1;
+}
+
+/**
+ * Sets the status of a GPIO pin.
+ */ 
+int setPinStatus(int pin, int status) {
+    if (!isValidPin(pin) || status > 1 || status < 0) return 0;
+
+    char cmd[100];
+    sprintf(cmd, "sudo gpio -g mode %d out", pin);
+    system(cmd);
+    sprintf(cmd, "sudo gpio -g write %d %d", pin, status);
+    system(cmd);
 
     return 1;
 }

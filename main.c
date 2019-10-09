@@ -417,6 +417,8 @@ void selectUpdatePin() {
  * Called when the program is run.
  */ 
 int main() {
+    atexit(turnMachinesOff);
+
     initMachineControl();
     displayMenu();
 }
