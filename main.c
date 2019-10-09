@@ -251,8 +251,8 @@ void selectCreateMachine() {
 
     // Request machine pin
     do {
-        printf("Enter machine PIN (must be 1-40) >>\n");
-    } while (safeIntInput(&pin) == 0 || (pin < 1 || pin > 40));
+        printf("Enter machine PIN (must be valid GPIO) >>\n");
+    } while (safeIntInput(&pin) == 0 || (pin < 1 || pin > 40) || !isValidPin(pin));
     printf("Entered %d\n", pin);    
 
     // Attempt to add the machine
@@ -401,8 +401,8 @@ void selectUpdatePin() {
 
     // Request pin
     do {
-        printf("Enter the pin (must be 1-40) (current: %d) >>\n", mach->pin); 
-    } while (safeIntInput(&pin) == 0 || (pin < 1 || pin > 40));
+        printf("Enter the pin (must be valid GPIO) (current: %d) >>\n", mach->pin); 
+    } while (safeIntInput(&pin) == 0 || (pin < 1 || pin > 40) || !isValidPin(pin));
 
     // Attempt to update machine pin
     if (updateMachinePin(index, pin) == 0) {

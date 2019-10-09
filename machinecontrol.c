@@ -30,6 +30,7 @@ int updateMachineStatus(int index, int status);
 int updateMachineName(int index, char name[NAME_MAX_LENGTH]);
 int updateMachineLocation(int index, char location[LOCATION_MAX_LENGTH]);
 int updateMachinePin(int index, int pin);
+int isValidPin(int pin);
 
 // All the machines are loaded into memory when the
 // application is started.
@@ -77,6 +78,22 @@ int deleteMachine(int index) {
             resetMachine(&machines[i]);
 
             saveAllMachines();
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * Checks if a pin is a valid GPIO pin
+ */
+int isValidPin(int pin) {
+    int validPins[28] = {3, 5, 7, 11, 13, 15, 19, 21, 23, 27, 29, 31, 33, 35, 37, 8, 10, 12, 16, 18,
+        22, 24, 26, 28, 32, 36, 38, 40};
+
+    for (int i = 0; i < 28; i++) {
+        if (validPins[i] == pin) {
             return 1;
         }
     }
