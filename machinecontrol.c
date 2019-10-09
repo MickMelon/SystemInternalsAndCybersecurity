@@ -230,6 +230,12 @@ int updateMachineStatus(int index, int status) {
 
     mach->status = status;
 
+    char cmd[100];
+    sprintf(cmd, "sudo gpio -g mode %d out", mach->pin);
+    system(cmd);
+    sprintf(cmd, "sudo gpio -g write %d %d", mach->pin, status);
+    system(cmd);
+
     saveAllMachines();
 
     return 1;
