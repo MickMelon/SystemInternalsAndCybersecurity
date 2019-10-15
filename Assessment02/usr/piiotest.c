@@ -13,8 +13,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <string.h>
 
-#include"piio.h"
+#include "piio.h"
 
 /*
  * Functions for the ioctl calls
