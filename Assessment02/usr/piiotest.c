@@ -13,9 +13,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <string.h>
 
-#include "piio.h"
+#include"piio.h"
 
 /*
  * Functions for the ioctl calls
@@ -67,8 +66,11 @@ int main(int argc, char *argv[]) {
 	printf("User App\n");
 	int fd, ret;
 	char *msg = "Message passed by ioctl\n";
+	char drvPath[30];
+	
+	sprintf(drvPath, "//dev//%s", DEVICE_NAME);
 
-	fd = open("//dev//piiodev", O_RDWR);
+	fd = open(drvPath, O_RDWR);
 	if (fd < 0) {
 		printf("Can't open device file: %s\n", DEVICE_NAME);
 		exit(-1);
@@ -102,6 +104,8 @@ int main(int argc, char *argv[]) {
 		}
 
 
+	} else {
+		printf("USAGE: ./run [readmsg/writemsg/readpin/writepin]");
 	}
 
 	printf("Exit 0\n");
