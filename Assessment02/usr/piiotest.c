@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#include <time.h>
 
 #include"piio.h"
 
@@ -32,6 +33,14 @@
 
 gpio_pin apin;
 lkm_data lkmdata;
+
+/**
+ * https://www.geeksforgeeks.org/time-delay-c/
+ */ 
+void delay(int ms) {
+	clock_t start_time = clock();
+	while (clock() < (start_time + ms));
+}
 
 void write_to_driver(int fd) {
 	int ret;
@@ -63,6 +72,46 @@ void read_from_drvier(int fd) {
 	printf("Message from driver: %s\n", lkmdata.data);
 }
 
+void write_to_driver_gpio(int fd, int pin, int value) {
+	int ret;
+
+	/*  Pass GPIO struct with IO control */
+	memset(&apin , 0, sizeof(apin));
+	strcpy(apin.desc, "Writepin");
+	apin.pin = pin;
+	apin.value = value;
+
+	if (apin.value == 1 || apin.value == 0) {
+		/* Pass 'apin' struct to 'fd' with IO control*/
+		ret = ioctl(fd, IOCTL_PIIO_GPIO_WRITE, &apin);
+		printf("WRITE:Requested pin:%i - val:%i - desc:%s\n" , apin.pin , apin.value, apin.desc);
+		if (ret < 0) {
+			printf("It fucked up\n");
+		}
+	} else {
+		printf("value wrong\n");
+	}		
+}
+
+int read_from_driver_gpio(int fd, int pin) {
+	int ret;
+
+	/*  Pass GPIO struct with IO control */
+	memset(&apin , 0, sizeof(apin));
+	strcpy(apin.desc, "Readpin");
+	apin.pin = pin;
+	/* Pass 'apin' struct to 'fd' with IO control*/
+	ret = ioctl(fd, IOCTL_PIIO_GPIO_READ, &apin);
+	printf("READ:Requested  pin:%i - val:%i - desc:%s\n" , apin.pin , apin.value, apin.desc);
+
+	if (ret < 0) {
+		printf("It fucked up\n");
+		return -1;
+	}
+
+	return apin.value;
+}
+
 int main(int argc, char *argv[]) {
 	printf("User App\n");
 	int fd, ret;
@@ -81,46 +130,50 @@ int main(int argc, char *argv[]) {
 	if (argc > 1) {
 		if (!strncmp(argv[1], "readmsg", 8)) {
 			read_from_drvier(fd);
-
 		}
 
 		if (!strncmp(argv[1], "writemsg", 9)) {
 			write_to_driver(fd);
 		}
 
-
-	//// need to write these bellow ones and add a toggle ting
 		if (!strncmp(argv[1], "readpin", 8)) {
-			/*  Pass GPIO struct with IO control */
-			memset(&apin , 0, sizeof(apin));
-			strcpy(apin.desc, "Details");
-			apin.pin =  strtol (argv[2],NULL,10);
-			/* Pass 'apin' struct to 'fd' with IO control*/
-			printf("READ:Requested  pin:%i - val:%i - desc:%s\n" , apin.pin , apin.value, apin.desc);
+			int pin = strtol(argv[2], NULL, 10);
 
-			ret = ioctl(fd, IOCTL_PIIO_GPIO_READ, &apin);
-			if (ret < 0) {
-				printf("It fucked up\n");
-			}
-
-
-}
-
-		if (!strncmp(argv[1], "writepin", 9)) {
-			/*  Pass GPIO struct with IO control */
-			memset(&apin , 0, sizeof(apin));
-			/* Pass 'apin' struct to 'fd' with IO control*/
-			printf("WRITE:Requested pin:%i - val:%i - desc:%s\n" , apin.pin , apin.value, apin.desc);
-
-			ret = ioctl(fd, IOCTL_PIIO_GPIO_WRITE, &apin);
-			if (ret < 0) {
-				printf("It fucked up\n");
-			}
+			read_from_driver_gpio(fd, pin);
 		}
 
+		if (!strncmp(argv[1], "writepin", 9)) {
+			int pin = strtol(argv[2], NULL, 10);
+			int value = strtol(argv[3], NULL, 10);
 
+			write_to_driver_gpio(fd, pin, value);
+		}
+
+		if (!strncmp(argv[1], "toggle", 7)) {
+			int pin = strtol(argv[2], NULL, 10);
+			int times = strtol(argv[3], NULL, 10);
+			int ms = strtol(argv[4], NULL, 10);
+
+			int value = read_from_driver_gpio(fd, pin);
+			int newValue;
+			if (value < 0) {
+				printf("error\n");
+			} else {
+				if (value == 1) newValue = 0;
+				else newValue = 1;
+
+				for (int i = 0; i < times; i++) {		
+					printf("TOGGLE: pin:%i times:%i current:%i value:%i ms:%i\n", pin, times, i, newValue, ms);		
+					write_to_driver_gpio(fd, pin, newValue);
+					usleep(ms * 1000);
+
+					if (newValue == 1) newValue = 0;
+					else newValue = 1;
+				}			
+			}
+		}
 	} else {
-		printf("USAGE: ./run [readmsg/writemsg/readpin/writepin]\n");
+		printf("USAGE: ./run [readmsg/writemsg/readpin/writepin/toggle]\n");
 	}
 
 	printf("Exit 0\n");
