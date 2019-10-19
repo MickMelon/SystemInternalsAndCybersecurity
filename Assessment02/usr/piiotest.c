@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <string.h>
 
 #include"piio.h"
 
@@ -87,6 +88,8 @@ int main(int argc, char *argv[]) {
 			write_to_driver(fd);
 		}
 
+
+	//// need to write these bellow ones and add a toggle ting
 		if (!strncmp(argv[1], "readpin", 8)) {
 			/*  Pass GPIO struct with IO control */
 			memset(&apin , 0, sizeof(apin));
@@ -94,6 +97,13 @@ int main(int argc, char *argv[]) {
 			apin.pin =  strtol (argv[2],NULL,10);
 			/* Pass 'apin' struct to 'fd' with IO control*/
 			printf("READ:Requested  pin:%i - val:%i - desc:%s\n" , apin.pin , apin.value, apin.desc);
+
+			ret = ioctl(fd, IOCTL_PIIO_GPIO_READ, &apin);
+			if (ret < 0) {
+				printf("It fucked up\n");
+			}
+
+
 }
 
 		if (!strncmp(argv[1], "writepin", 9)) {
@@ -101,11 +111,16 @@ int main(int argc, char *argv[]) {
 			memset(&apin , 0, sizeof(apin));
 			/* Pass 'apin' struct to 'fd' with IO control*/
 			printf("WRITE:Requested pin:%i - val:%i - desc:%s\n" , apin.pin , apin.value, apin.desc);
+
+			ret = ioctl(fd, IOCTL_PIIO_GPIO_WRITE, &apin);
+			if (ret < 0) {
+				printf("It fucked up\n");
+			}
 		}
 
 
 	} else {
-		printf("USAGE: ./run [readmsg/writemsg/readpin/writepin]");
+		printf("USAGE: ./run [readmsg/writemsg/readpin/writepin]\n");
 	}
 
 	printf("Exit 0\n");
