@@ -87,6 +87,7 @@ static int      device_ioctl(struct file *file, unsigned int cmd, unsigned long 
 		copy_to_user((void *)arg, &apin, sizeof(gpio_pin));
 		printk("piio IOCTL_PIIO_GPIO_READ: pi:%u - val:%i - desc:%s\n" , apin.pin , apin.value , apin.desc);
 		break;
+		
 	case IOCTL_PIIO_GPIO_WRITE:
 
 		copy_from_user(&apin, (gpio_pin *)arg, sizeof(gpio_pin));
