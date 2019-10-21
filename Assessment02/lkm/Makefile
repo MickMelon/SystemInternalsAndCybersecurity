@@ -1,4 +1,4 @@
-KERNEL := /home/abertay/linux
+KERNEL := /home/michael/pi/linux
 PWD := $(shell pwd)
 obj-m += piio.o
 

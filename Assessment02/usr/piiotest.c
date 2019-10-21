@@ -34,15 +34,7 @@
 gpio_pin apin;
 lkm_data lkmdata;
 
-/**
- * https://www.geeksforgeeks.org/time-delay-c/
- */ 
-void delay(int ms) {
-	clock_t start_time = clock();
-	while (clock() < (start_time + ms));
-}
-
-void write_to_driver(int fd) {
+int write_to_driver(int fd) {
 	int ret;
 	/* Write to kernel space - see dmesg command*/
 	strcpy(lkmdata.data, "This is from user application");
@@ -57,7 +49,7 @@ void write_to_driver(int fd) {
 
 }
 
-void read_from_drvier(int fd) {
+int read_from_driver(int fd) {
 	int ret;
 
 	/*Read from kernel space - see dmesg command*/
@@ -65,32 +57,37 @@ void read_from_drvier(int fd) {
 	ret = ioctl(fd, IOCTL_PIIO_READ, &lkmdata);
 
 	if (ret < 0) {
-		printf("Function failed:%d\n", ret);
+		printf("ERROR: ioctl error in read_from_driver() (ret: %d)\n", ret);
 		exit(-1);
 	}
 
 	printf("Message from driver: %s\n", lkmdata.data);
 }
 
-void write_to_driver_gpio(int fd, int pin, int value) {
+int write_to_driver_gpio(int fd, int pin, int value) {
 	int ret;
 
+	if (value < 0 || value > 1) {
+		printf("ERROR: value is greater than 0 or less than 1 (value: %i) in toggle_pin()\n", value);
+		return -1;
+	}
+
 	/*  Pass GPIO struct with IO control */
-	memset(&apin , 0, sizeof(apin));
+	memset(&apin, 0, sizeof(apin));
 	strcpy(apin.desc, "Writepin");
 	apin.pin = pin;
 	apin.value = value;
+	
+	/* Pass 'apin' struct to 'fd' with IO control*/
+	ret = ioctl(fd, IOCTL_PIIO_GPIO_WRITE, &apin);
+	printf("WRITE: Requested pin:%i - val:%i - desc:%s\n" , apin.pin , apin.value, apin.desc);
+	
+	if (ret < 0) {
+		printf("ERROR: ioctl error in write_to_driver_gpio() (ret: %d)\n", ret);
+		return -1;
+	}
 
-	if (apin.value == 1 || apin.value == 0) {
-		/* Pass 'apin' struct to 'fd' with IO control*/
-		ret = ioctl(fd, IOCTL_PIIO_GPIO_WRITE, &apin);
-		printf("WRITE:Requested pin:%i - val:%i - desc:%s\n" , apin.pin , apin.value, apin.desc);
-		if (ret < 0) {
-			printf("It fucked up\n");
-		}
-	} else {
-		printf("value wrong\n");
-	}		
+	return 1;
 }
 
 int read_from_driver_gpio(int fd, int pin) {
@@ -100,16 +97,84 @@ int read_from_driver_gpio(int fd, int pin) {
 	memset(&apin , 0, sizeof(apin));
 	strcpy(apin.desc, "Readpin");
 	apin.pin = pin;
+
 	/* Pass 'apin' struct to 'fd' with IO control*/
 	ret = ioctl(fd, IOCTL_PIIO_GPIO_READ, &apin);
-	printf("READ:Requested  pin:%i - val:%i - desc:%s\n" , apin.pin , apin.value, apin.desc);
+	printf("READ: Requested  pin:%i - val:%i - desc:%s\n" , apin.pin , apin.value, apin.desc);
 
 	if (ret < 0) {
-		printf("It fucked up\n");
+		printf("ERROR: ioctl error in read_from_driver_gpio() (ret: %d)\n", ret);
 		return -1;
 	}
 
 	return apin.value;
+}
+
+int toggle_pin(int fd, int pin, int times, int ms) {
+	int value = read_from_driver_gpio(fd, pin);
+
+	if (value < 0 || value > 1) {
+		printf("ERROR: value is greater than 0 or less than 1 (value: %i) in toggle_pin()\n", value);
+		return -1;
+	} 
+
+	value = value == 1 ? 0 : 1;
+
+	for (int i = 0; i < times; i++) {		
+		printf("TOGGLE: pin:%i - times:%i - current:%i - value:%i - ms:%i\n", pin, times, i, value, ms);		
+		write_to_driver_gpio(fd, pin, value);
+		usleep(ms * 1000);
+		value = value == 1 ? 0 : 1;
+	}
+
+	return 1;
+}
+
+void show_menu(int argc, char *argv[], int fd) {
+	if (argc > 1) {
+		if (!strncmp(argv[1], "readmsg", 8)) {
+			read_from_driver(fd);
+		}
+
+		else if (!strncmp(argv[1], "writemsg", 9)) {
+			write_to_driver(fd);
+		}
+
+		else if (!strncmp(argv[1], "readpin", 8)) {
+			if (argc < 3) {
+				printf("USAGE: piio readpin [pin]\n");
+				return;
+			}
+
+			int pin = strtol(argv[2], NULL, 10);
+			read_from_driver_gpio(fd, pin);
+		}
+
+		else if (!strncmp(argv[1], "writepin", 9)) {
+			if (argc < 4) {
+				printf("USAGE: piio writepin [pin] [value(1/0)]\n");
+				return;
+			}
+
+			int pin = strtol(argv[2], NULL, 10);
+			int value = strtol(argv[3], NULL, 10);
+			write_to_driver_gpio(fd, pin, value);
+		}
+
+		else if (!strncmp(argv[1], "toggle", 7)) {
+			if (argc < 5) {
+				printf("USAGE: piio toggle [pin] [times] [ms]\n");
+				return;
+			}
+
+			int pin = strtol(argv[2], NULL, 10);
+			int times = strtol(argv[3], NULL, 10);
+			int ms = strtol(argv[4], NULL, 10);
+			toggle_pin(fd, pin, times, ms);
+		}
+	} else {
+		printf("USAGE: piio [readmsg/writemsg/readpin/writepin/toggle]\n");
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -122,59 +187,11 @@ int main(int argc, char *argv[]) {
 
 	fd = open(drvPath, O_RDWR);
 	if (fd < 0) {
-		printf("Can't open device file: %s\n", DEVICE_NAME);
+		printf("ERROR: Can't open device file: %s\n", DEVICE_NAME);
 		exit(-1);
 	}
 
-
-	if (argc > 1) {
-		if (!strncmp(argv[1], "readmsg", 8)) {
-			read_from_drvier(fd);
-		}
-
-		if (!strncmp(argv[1], "writemsg", 9)) {
-			write_to_driver(fd);
-		}
-
-		if (!strncmp(argv[1], "readpin", 8)) {
-			int pin = strtol(argv[2], NULL, 10);
-
-			read_from_driver_gpio(fd, pin);
-		}
-
-		if (!strncmp(argv[1], "writepin", 9)) {
-			int pin = strtol(argv[2], NULL, 10);
-			int value = strtol(argv[3], NULL, 10);
-
-			write_to_driver_gpio(fd, pin, value);
-		}
-
-		if (!strncmp(argv[1], "toggle", 7)) {
-			int pin = strtol(argv[2], NULL, 10);
-			int times = strtol(argv[3], NULL, 10);
-			int ms = strtol(argv[4], NULL, 10);
-
-			int value = read_from_driver_gpio(fd, pin);
-			int newValue;
-			if (value < 0) {
-				printf("error\n");
-			} else {
-				if (value == 1) newValue = 0;
-				else newValue = 1;
-
-				for (int i = 0; i < times; i++) {		
-					printf("TOGGLE: pin:%i times:%i current:%i value:%i ms:%i\n", pin, times, i, newValue, ms);		
-					write_to_driver_gpio(fd, pin, newValue);
-					usleep(ms * 1000);
-
-					if (newValue == 1) newValue = 0;
-					else newValue = 1;
-				}			
-			}
-		}
-	} else {
-		printf("USAGE: ./run [readmsg/writemsg/readpin/writepin/toggle]\n");
-	}
+	show_menu(argc, argv, fd);
 
 	printf("Exit 0\n");
 

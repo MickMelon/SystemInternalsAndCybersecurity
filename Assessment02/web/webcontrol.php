@@ -3,7 +3,7 @@ if (isset($_POST['pin']) && isset($_POST['value'])) {
     echo 'Submission received';
     $pin = $_POST['pin'];
     $value = $_POST['value'];
-    echo shell_exec('gpio writepin ' . $pin . ' ' . $value);
+    echo shell_exec('sudo piio writepin ' . $pin . ' ' . $value);
 }
 ?>
 
