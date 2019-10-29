@@ -25,10 +25,12 @@ typedef struct gpio_pin {
 	char opt;
 } gpio_pin;
 
-#define IOCTL_PIIO_READ 0x65
-#define IOCTL_PIIO_WRITE 0x66
-#define IOCTL_PIIO_GPIO_READ 0x67
-#define IOCTL_PIIO_GPIO_WRITE 0x68
+#define MAGIC_NUMBER '7'
+
+#define IOCTL_PIIO_READ 		_IOR(MAGIC_NUMBER, 1, lkm_data)
+#define IOCTL_PIIO_WRITE		_IOW(MAGIC_NUMBER, 2, lkm_data)
+#define IOCTL_PIIO_GPIO_READ	_IOR(MAGIC_NUMBER, 3, gpio_pin)
+#define IOCTL_PIIO_GPIO_WRITE	_IOW(MAGIC_NUMBER, 4, gpio_pin)
 
 #define  DEVICE_NAME "dMichaelMcMillan"
 #define  CLASS_NAME  "piiocls"

@@ -243,6 +243,8 @@ void showMenu(int argc, char *argv[], int fd) {
  * The entry point to the program. Attempts to load the driver and then shows the menu.
  */ 
 int main(int argc, char *argv[]) {
+	
+
 	printf("User App\n");
 	int fd, ret;
 	char *msg = "Message passed by ioctl\n";

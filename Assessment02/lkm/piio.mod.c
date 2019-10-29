@@ -35,13 +35,13 @@ __attribute__((section("__versions"))) = {
 	{ 0x5e220692, "__class_create" },
 	{ 0x114878ce, "__register_chrdev" },
 	{ 0x5f754e5a, "memset" },
-	{ 0xf4fa543b, "arm_copy_to_user" },
 	{ 0x809144ac, "gpiod_get_raw_value" },
 	{ 0x93bb0087, "gpiod_set_raw_value" },
 	{ 0xd7447c7, "gpiod_direction_output_raw" },
 	{ 0xed66b2e0, "gpio_to_desc" },
 	{ 0x47229b5c, "gpio_request" },
 	{ 0x28cc25db, "arm_copy_from_user" },
+	{ 0xf4fa543b, "arm_copy_to_user" },
 	{ 0x25d5b051, "try_module_get" },
 	{ 0x2e5810c6, "__aeabi_unwind_cpp_pr1" },
 	{ 0xe7bae5ff, "module_put" },
@@ -55,4 +55,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "86BD42A13BB72DA9F17D20F");
+MODULE_INFO(srcversion, "90E030FB4E2BF9C9077F7CB");
