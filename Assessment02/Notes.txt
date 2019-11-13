@@ -1,9 +1,0 @@
-# vim: syntax=conf
-
-# Transfer files over network
-scp [files] pi@192.168.1.8:/home/pi
-
-# Insert kernel module into system
-sudo insmod piio.ko
-
-

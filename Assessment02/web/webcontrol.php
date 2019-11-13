@@ -6,7 +6,7 @@ if (isset($_POST['readpin_submit'])) {
         return;
     }
 
-    $pin = $_POST['pin'];
+    $pin = clean_string($_POST['pin']);
 
     echo 'OUTPUT: ';
     echo nl2br(shell_exec('sudo piio readpin ' . $pin));
@@ -20,8 +20,9 @@ if (isset($_POST['writepin_submit'])) {
         return;
     }
 
-    $pin = $_POST['pin'];
-    $value = $_POST['value'];
+    $pin = clean_string($_POST['pin']);
+    $value = clean_string($_POST['value']);
+
     echo 'OUTPUT: ';
     echo nl2br(shell_exec('sudo piio writepin ' . $pin . ' ' . $value));
     echo '<br />';
@@ -34,13 +35,19 @@ if (isset($_POST['togglepin_submit'])) {
         return;
     }
 
-    $pin = $_POST['pin'];
-    $times = $_POST['times'];
-    $ms = $_POST['ms'];
+    $pin = clean_string($_POST['pin']);
+    $times = clean_string($_POST['times']);
+    $ms = clean_string($_POST['ms']);
+
     echo 'OUTPUT: ';
     echo nl2br(shell_exec('sudo piio toggle ' . $pin . ' ' . $times . ' ' . $ms));
     echo '<br />';
 }
+
+function clean_string($string) {
+    return preg_replace('/[^\w]/', '', $string);
+}
+
 ?>
 
 <h4>Read Pin</h4>
